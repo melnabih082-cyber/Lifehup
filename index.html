@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Life Hub</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#111827">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--bg:#f6f6f4;--card:#fff;--tx:#1c1c1a;--mut:#6b6b66;--bd:#e3e3de;--ac:#2563eb;--acbg:#e8f0fe;--ok:#16794a;--okbg:#e6f4ec;--dg:#b42318;--dgbg:#fdecea;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1a1a18;--card:#252522;--tx:#f1f1ee;--mut:#a3a39d;--bd:#3a3a36;--ac:#8ab4ff;--acbg:#26324a;--ok:#6fd3a0;--okbg:#1d3a2b;--dg:#ff9a8f;--dgbg:#43211e;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1a1a18;--card:#252522;--tx:#f1f1ee;--mut:#a3a39d;--bd:#3a3a36;--ac:#8ab4ff;--acbg:#26324a;--ok:#6fd3a0;--okbg:#1d3a2b;--dg:#ff9a8f;--dgbg:#43211e;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.6 system-ui,"Segoe UI",Tahoma,Arial,sans-serif;padding-bottom:84px}
+main{max-width:640px;margin:0 auto;padding:14px}
+h1{font-size:20px;font-weight:500;margin:0 0 12px}
+h2{font-size:13px;font-weight:500;color:var(--mut);margin:18px 0 6px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px}
+.row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--bd)}
+.row:last-child{border-bottom:0}
+.grow{flex:1;min-width:0}
+.t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sub{font-size:12px;color:var(--mut)}
+.done .t{text-decoration:line-through;color:var(--mut)}
+input,select,button{font:inherit;color:inherit}
+input,select{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:9px 10px;min-width:0}
+.add{display:flex;gap:8px;margin-top:8px}.add input{flex:1}
+.btn{background:var(--tx);color:var(--bg);border:0;border-radius:8px;padding:9px 14px;cursor:pointer}
+.lnk{background:none;border:0;color:var(--ac);padding:6px;cursor:pointer;font-size:13px}
+.lnk.d{color:var(--mut)}
+.chk{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--mut);background:none;flex:none;cursor:pointer;padding:0}
+.chk.on{background:var(--ok);border-color:var(--ok)}
+.tag{font-size:11px;border-radius:6px;padding:1px 7px;background:var(--bg);color:var(--mut)}
+.p1{background:var(--dgbg);color:var(--dg)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--bd);background:none;border-radius:16px;padding:6px 12px;font-size:13px;cursor:pointer}
+.chip.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.chip.sel{background:var(--tx);color:var(--bg);border-color:var(--tx)}
+.tm{background:var(--acbg);color:var(--ac);border:0;border-radius:8px;padding:6px 10px;font-variant-numeric:tabular-nums;cursor:pointer}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:6px}
+.stats b{display:block;font-size:18px;font-weight:500}
+.bar{height:6px;background:var(--bd);border-radius:3px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ac)}
+.empty{padding:14px;color:var(--mut);font-size:13px}
+nav{position:fixed;inset:auto 0 0 0;display:flex;justify-content:space-around;background:var(--card);border-top:1px solid var(--bd);padding:8px 4px calc(8px + env(safe-area-inset-bottom,0px))}
+nav button{background:none;border:0;font-size:12px;color:var(--mut);padding:4px 8px;cursor:pointer}
+nav button.on{color:var(--ac);font-weight:500}
+#inst{display:none;background:var(--acbg);color:var(--ac);padding:10px 14px;align-items:center;justify-content:space-between;gap:10px}#inst button{background:var(--ac);color:var(--bg);border:0;border-radius:8px;padding:8px 18px;font-weight:500;cursor:pointer}
+#msg{background:var(--dgbg);color:var(--dg);font-size:12px;text-align:center;padding:6px;display:none}
+</style>
+</head>
+<body>
+<div id="inst"><span>ثبّت Life Hub كتطبيق على هاتفك</span><button id="instbtn">Install</button></div>
+<div id="msg"></div>
+<main id="app"></main>
+<nav id="nav"></nav>
+<script>
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,9);
+const ymd=(d=new Date())=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const DAYS=['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
+const PR={1:'عاجلة',2:'مهمة',3:'عادية',4:'مؤجلة'};
+const TABS=[['home','الرئيسية'],['tasks','المهام'],['projects','المشاريع'],['habits','العادات'],['notes','الأفكار']];
+let S={tasks:[],habits:[],logs:{},notes:[],projects:[],timer:null},tab='home',doneView=false,newDays=[0,1,2,3,4,5,6],armed=null,tm=null;
+
+const secs=t=>t.secs+(S.timer&&S.timer.id===t.id?Math.floor((Date.now()-S.timer.start)/1000):0);
+const fmt=s=>[Math.floor(s/3600),Math.floor(s%3600/60),s%60].map(n=>String(n).padStart(2,'0')).join(':');
+const hrs=s=>{const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+' س '+m+' د':m+' د'};
+const val=id=>{const e=document.getElementById(id);const v=e?e.value.trim():'';if(e)e.value='';return v};
+const msg=t=>{const m=document.getElementById('msg');m.textContent=t;m.style.display=t?'block':'none'};
+
+function save(){
+  clearTimeout(tm);
+  tm=setTimeout(()=>{try{localStorage.setItem('lifehub-state',JSON.stringify(S));msg('')}catch(e){msg('تعذر الحفظ: مساحة التخزين ممتلئة')}},200);
+}
+function stopT(){
+  if(!S.timer)return;
+  const t=S.tasks.find(x=>x.id===S.timer.id);
+  if(t)t.secs+=Math.floor((Date.now()-S.timer.start)/1000);
+  S.timer=null;
+}
+function addTask(title,extra){
+  if(!title)return;
+  S.tasks.push(Object.assign({id:uid(),t:title,p:2,due:'',pid:'',done:false,secs:0,doneAt:''},extra||{}));
+  save();render();
+}
+
+function taskRow(t){
+  const run=S.timer&&S.timer.id===t.id,pj=S.projects.find(p=>p.id===t.pid);
+  return `<div class="row ${t.done?'done':''}">
+    <button class="chk ${t.done?'on':''}" data-a="done" data-i="${t.id}" aria-label="إنجاز"></button>
+    <div class="grow"><div class="t">${esc(t.t)}</div>
+    <div class="sub">${t.p===1?'<span class="tag p1">عاجلة</span> ':''}${t.due&&t.due<ymd()&&!t.done?'متأخرة · ':''}${t.due?esc(t.due)+' · ':''}${pj?esc(pj.n)+' · ':''}${t.secs||run?hrs(secs(t)):''}</div></div>
+    ${t.done?`<button class="lnk d" data-a="del" data-i="${t.id}">${armed===t.id?'تأكيد الحذف':'حذف'}</button>`
+    :`<button class="tm" data-a="timer" data-i="${t.id}" ${run?'data-tick="'+t.id+'"':''}>${run?fmt(secs(t)):'▶'}</button>`}
+  </div>`;
+}
+const list=(arr,empty)=>arr.length?`<div class="card">${arr.map(taskRow).join('')}</div>`:`<div class="card empty">${empty}</div>`;
+const sortT=a=>a.slice().sort((x,y)=>(x.due||'9').localeCompare(y.due||'9')||x.p-y.p);
+
+function vHome(){
+  const today=ymd(),wd=new Date().getDay();
+  const urgent=sortT(S.tasks.filter(t=>!t.done&&t.due&&t.due<=today)).slice(0,6);
+  const hs=S.habits.filter(h=>h.days.includes(wd)),dn=S.logs[today]||[];
+  return `<h1>يومك</h1>
+  <h2>المهام العاجلة</h2>${list(urgent,'لا مهام عاجلة اليوم. يوم هادئ.')}
+  <div class="add"><input id="qt" placeholder="مهمة جديدة لليوم"><button class="btn" data-a="qtask">إضافة</button></div>
+  <h2>عادات اليوم</h2>
+  ${hs.length?`<div class="chips">${hs.map(h=>`<button class="chip ${dn.includes(h.id)?'on':''}" data-a="hlog" data-i="${h.id}">${dn.includes(h.id)?'✓ ':''}${esc(h.n)}</button>`).join('')}</div>`:'<div class="card empty">لا عادات مجدولة اليوم.</div>'}
+  <h2>فكرة سريعة</h2>
+  <div class="add"><input id="qn" placeholder="دوّن فكرة قبل أن تنساها"><button class="btn" data-a="qnote">حفظ</button></div>`;
+}
+function vTasks(){
+  const open=S.tasks.filter(t=>!t.done),done=S.tasks.filter(t=>t.done).sort((a,b)=>b.doneAt.localeCompare(a.doneAt));
+  const m=ymd().slice(0,7),mDone=done.filter(t=>t.doneAt.startsWith(m));
+  const stats=`<div class="stats"><div><b>${mDone.length}</b><span class="sub">منجزة هذا الشهر</span></div><div><b>${hrs(mDone.reduce((s,t)=>s+t.secs,0))}</b><span class="sub">وقت تركيز</span></div><div><b>${done.length}</b><span class="sub">في الأرشيف</span></div></div>`;
+  return `<h1>مهامك</h1>
+  <div class="chips"><button class="chip ${!doneView?'sel':''}" data-a="view" data-i="0">قيد التنفيذ</button><button class="chip ${doneView?'sel':''}" data-a="view" data-i="1">المنجزة والأرشيف</button></div>
+  ${doneView?`<h2>ملخص</h2>${stats}<h2>المنجزة</h2>${list(done,'لا مهام منجزة بعد.')}`:`
+  <div class="add" style="flex-wrap:wrap"><input id="nt" placeholder="عنوان المهمة" style="flex:1 1 100%">
+  <input type="date" id="nd"><select id="np"><option value="2">مهمة</option><option value="1">عاجلة</option><option value="3">عادية</option><option value="4">مؤجلة</option></select>
+  <select id="nj"><option value="">بلا مشروع</option>${S.projects.filter(p=>!p.arch).map(p=>`<option value="${p.id}">${esc(p.n)}</option>`).join('')}</select>
+  <button class="btn" data-a="ntask">إضافة</button></div>
+  <h2>المهام (${open.length})</h2>${list(sortT(open),'لا مهام. صفحة هادئة.')}`}`;
+}
+function vProjects(){
+  const ps=S.projects.filter(p=>!p.arch);
+  return `<h1>مشاريعك</h1><div class="add"><input id="pn" placeholder="اسم المشروع"><button class="btn" data-a="nproj">إنشاء</button></div>
+  ${ps.map(p=>{const ts=S.tasks.filter(t=>t.pid===p.id),d=ts.filter(t=>t.done).length,pc=ts.length?Math.round(d/ts.length*100):0;
+  return `<h2>${esc(p.n)} · ${d}/${ts.length}</h2><div class="bar"><i style="width:${pc}%"></i></div>
+  <div style="margin-top:8px">${list(sortT(ts),'لا مهام في هذا المشروع.')}</div>
+  <div class="add"><input id="pt${p.id}" placeholder="مهمة في هذا المشروع"><button class="btn" data-a="ptask" data-i="${p.id}">إضافة</button></div>
+  <button class="lnk d" data-a="parch" data-i="${p.id}">${armed===p.id?'تأكيد الأرشفة':'أرشفة المشروع'}</button>`}).join('')||'<div class="card empty" style="margin-top:12px">ابدأ مشروعك الأول.</div>'}`;
+}
+function vHabits(){
+  const wd=new Date().getDay(),m=ymd().slice(0,7);
+  const cnt=id=>Object.keys(S.logs).filter(d=>d.startsWith(m)&&S.logs[d].includes(id)).length;
+  return `<h1>عاداتك</h1><div class="card" style="padding:12px"><input id="hn" placeholder="اسم العادة" style="width:100%">
+  <div class="chips" style="margin:10px 0">${DAYS.map((d,i)=>`<button class="chip ${newDays.includes(i)?'sel':''}" data-a="hday" data-i="${i}">${d}</button>`).join('')}</div>
+  <button class="btn" data-a="nhab">إضافة عادة</button></div>
+  <h2>كل العادات</h2><div class="card">${S.habits.map(h=>`<div class="row"><div class="grow"><div class="t">${esc(h.n)}</div>
+  <div class="sub">${h.days.length===7?'كل يوم':h.days.map(d=>DAYS[d]).join('، ')} · ${cnt(h.id)?'أنجزتَها '+cnt(h.id)+' مرة هذا الشهر':'لم تُسجَّل بعد هذا الشهر. لا بأس.'}</div></div>
+  <button class="lnk d" data-a="hdel" data-i="${h.id}">${armed===h.id?'تأكيد الحذف':'حذف'}</button></div>`).join('')||'<div class="empty">لا عادات بعد.</div>'}</div>`;
+}
+function vNotes(){
+  return `<h1>أفكارك</h1><div class="add"><input id="qn" placeholder="فكرة جديدة"><button class="btn" data-a="qnote">حفظ</button></div>
+  <div style="margin-top:12px">${S.notes.slice().reverse().map(n=>`<div class="card" style="padding:10px 12px;margin-bottom:8px;white-space:pre-wrap">${esc(n.t)}
+  <div><button class="lnk d" data-a="ndel" data-i="${n.id}">${armed===n.id?'تأكيد الحذف':'حذف'}</button></div></div>`).join('')||'<div class="card empty">لا أفكار بعد.</div>'}</div>`;
+}
+function render(){
+  const a=document.activeElement,keep=a&&a.id?a.id:null,kv=a&&a.id?a.value:'';
+  document.getElementById('app').innerHTML={home:vHome,tasks:vTasks,projects:vProjects,habits:vHabits,notes:vNotes}[tab]();
+  document.getElementById('nav').innerHTML=TABS.map(([k,l])=>`<button class="${tab===k?'on':''}" data-a="tab" data-i="${k}">${l}</button>`).join('');
+  if(keep){const e=document.getElementById(keep);if(e){e.value=kv;e.focus()}}
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-a]');if(!b)return;
+  const a=b.dataset.a,i=b.dataset.i,T=()=>S.tasks.find(t=>t.id===i);
+  const confirmed=armed===i;if(!['tab','view','hday'].includes(a)&&!['del','parch','hdel','ndel'].includes(a))armed=null;
+  if(a==='tab'){tab=i;armed=null;render();return}
+  if(a==='view'){doneView=i==='1';render();return}
+  if(a==='done'){const t=T();t.done=!t.done;t.doneAt=t.done?ymd():'';if(t.done&&S.timer&&S.timer.id===t.id)stopT()}
+  else if(a==='timer'){if(S.timer&&S.timer.id===i)stopT();else{stopT();S.timer={id:i,start:Date.now()}}}
+  else if(a==='qtask'){addTask(val('qt'),{due:ymd()});return}
+  else if(a==='ntask'){const t=val('nt');if(!t)return;const d=document.getElementById('nd').value,p=+document.getElementById('np').value,j=document.getElementById('nj').value;addTask(t,{due:d,p,pid:j});return}
+  else if(a==='ptask'){addTask(val('pt'+i),{pid:i});return}
+  else if(a==='nproj'){const n=val('pn');if(!n)return;S.projects.push({id:uid(),n,arch:false})}
+  else if(a==='parch'){if(!confirmed){armed=i;render();return}armed=null;S.projects.find(p=>p.id===i).arch=true}
+  else if(a==='del'){if(!confirmed){armed=i;render();return}armed=null;S.tasks=S.tasks.filter(t=>t.id!==i)}
+  else if(a==='hlog'){const d=ymd();const l=S.logs[d]||(S.logs[d]=[]);const k=l.indexOf(i);k<0?l.push(i):l.splice(k,1)}
+  else if(a==='hday'){const k=newDays.indexOf(+i);k<0?newDays.push(+i):newDays.splice(k,1);newDays.sort();render();return}
+  else if(a==='nhab'){const n=val('hn');if(!n||!newDays.length)return;S.habits.push({id:uid(),n,days:newDays.slice()})}
+  else if(a==='hdel'){if(!confirmed){armed=i;render();return}armed=null;S.habits=S.habits.filter(h=>h.id!==i)}
+  else if(a==='qnote'){const n=val('qn');if(!n)return;S.notes.push({id:uid(),t:n})}
+  else if(a==='ndel'){if(!confirmed){armed=i;render();return}armed=null;S.notes=S.notes.filter(n=>n.id!==i)}
+  save();render();
+});
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter'||!e.target.id)return;
+  const m={qt:'qtask',nt:'ntask',pn:'nproj',hn:'nhab',qn:'qnote'}[e.target.id]||(e.target.id.startsWith('pt')?'ptask':null);
+  if(!m)return;const b=document.querySelector('[data-a="'+m+'"]'+(m==='ptask'?'[data-i="'+e.target.id.slice(2)+'"]':''));if(b)b.click();
+});
+setInterval(()=>{if(!S.timer)return;document.querySelectorAll('[data-tick]').forEach(b=>{const t=S.tasks.find(x=>x.id===b.dataset.tick);if(t)b.textContent=fmt(secs(t))})},1000);
+try{const raw=localStorage.getItem('lifehub-state');if(raw)S=Object.assign(S,JSON.parse(raw))}catch(e){}
+render();
+let dp=null;
+const inst=document.getElementById('inst');
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;inst.style.display='flex'});
+document.getElementById('instbtn').addEventListener('click',async()=>{if(!dp)return;dp.prompt();await dp.userChoice;dp=null;inst.style.display='none'});
+window.addEventListener('appinstalled',()=>{inst.style.display='none'});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
